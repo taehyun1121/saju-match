@@ -53,6 +53,11 @@ def compatibility(req: CompatibilityRequest):
     )
 
 
+@app.get("/")
+def root():
+    return {"service": "SajuMatch API", "status": "running", "version": "1.0"}
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
