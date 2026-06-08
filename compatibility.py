@@ -51,11 +51,57 @@ def _hour_ji(hour):
             return ji
     return "자"
 
+# 월간 산출: 연간 오행 기준 인월(1월) 천간 시작 인덱스
+_WOL_GAN_BASE = [2, 4, 6, 8, 0]  # 갑·기, 을·경, 병·신, 정·임, 무·계 순
+
+def _month_gan(yeon_gan: str, wol_ji: str) -> str:
+    """연간 + 월지 → 월간 산출 (오호둔법)"""
+    yeon_idx = CHEONGAN.index(yeon_gan)
+    base = _WOL_GAN_BASE[yeon_idx % 5]
+    # 인월(寅=인)부터 1월로 계산
+    wol_order = ["인","묘","진","사","오","미","신","유","술","해","자","축"]
+    wol_num = wol_order.index(wol_ji) if wol_ji in wol_order else 0
+    return CHEONGAN[(base + wol_num) % 10]
+
+def _hour_gan(il_gan: str, si_ji: str) -> str:
+    """일간 + 시지 → 시간 산출 (오자원두법)"""
+    il_idx = CHEONGAN.index(il_gan)
+    base = (il_idx % 5) * 2  # 갑·기=0(갑), 을·경=2(병), 병·신=4(무), 정·임=6(경), 무·계=8(임)
+    si_order = ["자","축","인","묘","진","사","오","미","신","유","술","해"]
+    si_num = si_order.index(si_ji) if si_ji in si_order else 0
+    return CHEONGAN[(base + si_num) % 10]
+
 def get_pillars(year, month, day, hour=None):
-    """생년월일시 → (일간, 일지, 연지) 반환"""
+    """생년월일시 → (일간, 일지, 연지) 반환 (하위호환)"""
     il_gan, il_ji = _day_pillar(year, month, day)
     yeon_ji = JIJI[(year - 4) % 12]
     return il_gan, il_ji, yeon_ji
+
+def get_all_pillars(year, month, day, hour=None):
+    """생년월일시 → 사주 4주 전체 반환"""
+    il_gan, il_ji = _day_pillar(year, month, day)
+
+    # 연주
+    yeon_gan = CHEONGAN[(year - 4) % 10]
+    yeon_ji  = JIJI[(year - 4) % 12]
+
+    # 월주
+    wol_ji  = _month_ji(month, day)
+    wol_gan = _month_gan(yeon_gan, wol_ji)
+
+    # 시주
+    if hour is not None:
+        si_ji  = _hour_ji(hour)
+        si_gan = _hour_gan(il_gan, si_ji)
+    else:
+        si_ji = si_gan = None
+
+    return {
+        "yeonju":  {"gan": yeon_gan, "ji": yeon_ji},
+        "wolju":   {"gan": wol_gan,  "ji": wol_ji},
+        "ilju":    {"gan": il_gan,   "ji": il_ji},
+        "siju":    {"gan": si_gan,   "ji": si_ji} if si_gan else None,
+    }
 
 
 # ── 오행 데이터 ────────────────────────────────────────────────────────────

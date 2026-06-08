@@ -2,7 +2,7 @@ from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
-from compatibility import calc_compatibility, get_pillars
+from compatibility import calc_compatibility, get_pillars, get_all_pillars
 
 app = FastAPI(title="SajuMatch API")
 api = APIRouter(prefix="/api")
@@ -35,11 +35,13 @@ class CompatibilityRequest(BaseModel):
 @api.post("/saju")
 def get_saju(req: SajuRequest):
     p = req.person
-    gan, ji, yeonji = get_pillars(p.year, p.month, p.day, p.hour)
+    pillars = get_all_pillars(p.year, p.month, p.day, p.hour)
     return {
-        "ilgan": gan,
-        "ilji": ji,
-        "yeonji": yeonji,
+        "pillars": pillars,
+        # 하위 호환 필드
+        "ilgan": pillars["ilju"]["gan"],
+        "ilji":  pillars["ilju"]["ji"],
+        "yeonji": pillars["yeonju"]["ji"],
         "birth": {"year": p.year, "month": p.month, "day": p.day, "hour": p.hour},
     }
 
