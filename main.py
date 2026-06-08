@@ -35,9 +35,10 @@ class CompatibilityRequest(BaseModel):
 @api.post("/saju")
 def get_saju(req: SajuRequest):
     p = req.person
-    pillars = get_all_pillars(p.year, p.month, p.day, p.hour)
+    pillars, ohaeng = get_all_pillars(p.year, p.month, p.day, p.hour)
     return {
         "pillars": pillars,
+        "ohaeng": ohaeng,
         # 하위 호환 필드
         "ilgan": pillars["ilju"]["gan"],
         "ilji":  pillars["ilju"]["ji"],

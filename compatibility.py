@@ -77,8 +77,35 @@ def get_pillars(year, month, day, hour=None):
     yeon_ji = JIJI[(year - 4) % 12]
     return il_gan, il_ji, yeon_ji
 
+def _calc_ohaeng(pillars: dict) -> dict:
+    """4주 천간+지지에서 오행 분포 계산"""
+    # OHAENG_MAP/JIJI_OHAENG은 아래에 정의돼 있으나 여기선 인라인 사용
+    gan_oh = {"갑":"木","을":"木","병":"火","정":"火","무":"土","기":"土","경":"金","신":"金","임":"水","계":"水"}
+    ji_oh  = {"자":"水","축":"土","인":"木","묘":"木","진":"土","사":"火","오":"Fire","미":"土","신":"金","유":"金","술":"土","해":"水"}
+    ji_oh  = {"자":"水","축":"土","인":"木","묘":"木","진":"土","사":"火","오":"火","미":"土","신":"金","유":"金","술":"土","해":"水"}
+
+    counts = {"木": 0, "火": 0, "土": 0, "金": 0, "水": 0}
+    for key, pillar in pillars.items():
+        if not pillar:
+            continue
+        for char_type, lookup in [("gan", gan_oh), ("ji", ji_oh)]:
+            ch = pillar.get(char_type)
+            if ch and ch in lookup:
+                counts[lookup[ch]] += 1
+
+    total = sum(counts.values()) or 1
+    lacking = [oh for oh, cnt in counts.items() if cnt == 0]
+    dominant = max(counts, key=counts.get)
+
+    return {
+        "counts": counts,
+        "total": total,
+        "lacking": lacking,
+        "dominant": dominant,
+    }
+
 def get_all_pillars(year, month, day, hour=None):
-    """생년월일시 → 사주 4주 전체 반환"""
+    """생년월일시 → 사주 4주 전체 + 오행 분석 반환"""
     il_gan, il_ji = _day_pillar(year, month, day)
 
     # 연주
@@ -96,12 +123,13 @@ def get_all_pillars(year, month, day, hour=None):
     else:
         si_ji = si_gan = None
 
-    return {
-        "yeonju":  {"gan": yeon_gan, "ji": yeon_ji},
-        "wolju":   {"gan": wol_gan,  "ji": wol_ji},
-        "ilju":    {"gan": il_gan,   "ji": il_ji},
-        "siju":    {"gan": si_gan,   "ji": si_ji} if si_gan else None,
+    pillars = {
+        "yeonju": {"gan": yeon_gan, "ji": yeon_ji},
+        "wolju":  {"gan": wol_gan,  "ji": wol_ji},
+        "ilju":   {"gan": il_gan,   "ji": il_ji},
+        "siju":   {"gan": si_gan,   "ji": si_ji} if si_gan else None,
     }
+    return pillars, _calc_ohaeng(pillars)
 
 
 # ── 오행 데이터 ────────────────────────────────────────────────────────────
